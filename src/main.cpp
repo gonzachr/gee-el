@@ -13,6 +13,12 @@
 #include "vblayout.h"
 #include "vbuffer.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+const unsigned int SRC_WIDTH = 800;
+const unsigned int SRC_HEIGHT = 600;
+
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
@@ -36,7 +42,7 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   // Create OpenGL window and context
-  GLFWwindow *window = glfwCreateWindow(800, 600, "yup", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "yup", NULL, NULL);
   glfwMakeContextCurrent(window);
 
   // Check for window creation failure
@@ -62,18 +68,44 @@ int main() {
   std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes
             << std::endl;
 
-  // TODO: glViewport not working properly
-  // glViewport(0, 0, 800, 600);
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
   {
     float vertices[] = {
-        // positions
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,
-        0.5f,  0.5f,  0.0f, 1.0f, 1.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
-    };
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
+        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+
+        -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+        0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
+        0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
+        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
+
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
 
     unsigned int indices[] = {0, 1, 2, 2, 3, 0};
 
+    GlCall(glEnable(GL_DEPTH_TEST));
     GlCall(glEnable(GL_BLEND));
     GlCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
@@ -93,11 +125,14 @@ int main() {
 
     Shader shader = Shader(vertexShader, fragmentShader);
     shader.Bind();
+
     shader.SetUniform4f("u_Color", 0.2f, 0.5f, 0.8f, 1.0f);
 
-    Texture texture = Texture("../res/textures/awesome.png");
-    texture.Bind();
-    shader.SetUniform1i("u_Texture", 0);
+    Texture texture1 = Texture("../res/textures/awesome.png");
+    shader.SetUniform1i("u_Texture1", 0);
+
+    Texture texture2 = Texture("../res/textures/travel.png");
+    shader.SetUniform1i("u_Texture2", 1);
 
     ib.Unbind();
     va.Unbind();
@@ -105,12 +140,33 @@ int main() {
 
     Renderer renderer;
 
+    texture1.Bind(0);
+    texture2.Bind(1);
+
+    glm::mat4 proj =
+        glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glm::mat4 view =
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
     // Event loop
     while (!glfwWindowShouldClose(window)) {
       processInput(window);
       renderer.Clear();
 
-      renderer.Draw(va, ib, shader);
+      va.Bind();
+      shader.Bind();
+
+      for (unsigned int i = 0; i < 10; i++) {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
+        model = glm::rotate(
+            model,
+            glm::radians((float)glfwGetTime() * (float)(20.0f * (i + 1))),
+            glm::vec3(1.0f, 0.3f, 0.5f));
+
+        glm::mat4 mvp = proj * view * model;
+
+        shader.SetUniformMat4f("u_MVP", mvp);
+        GlCall(glDrawArrays(GL_TRIANGLES, 0, 36));
+      }
 
       glfwSwapBuffers(window);
       glfwPollEvents();
