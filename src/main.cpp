@@ -16,6 +16,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "imgui.h"
+#include "vendor/imgui/imgui_impl_glfw.h"
+#include "vendor/imgui/imgui_impl_opengl3.h"
+
 const unsigned int SRC_WIDTH = 800;
 const unsigned int SRC_HEIGHT = 600;
 
@@ -40,9 +44,11 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 
   // Create OpenGL window and context
-  GLFWwindow *window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "yup", NULL, NULL);
+  GLFWwindow *window =
+      glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "yup", NULL, NULL);
   glfwMakeContextCurrent(window);
 
   // Check for window creation failure
@@ -69,6 +75,17 @@ int main() {
             << std::endl;
 
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
+
+  ImGui::StyleColorsDark();
+
+  const char *glsl_version = "#version 150";
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init(glsl_version);
 
   {
     float vertices[] = {
@@ -147,9 +164,26 @@ int main() {
         glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     glm::mat4 view =
         glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+
+    bool imgui_window = true;
     // Event loop
     while (!glfwWindowShouldClose(window)) {
-      processInput(window);
+      glfwPollEvents();
+
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      if (imgui_window) {
+        ImGui::Begin("Another Window", &imgui_window);
+        ImGui::Text("Hello from another window!");
+
+        if (ImGui::Button("Close Me"))
+          imgui_window = false;
+
+        ImGui::End();
+      }
+
       renderer.Clear();
 
       va.Bind();
@@ -168,12 +202,17 @@ int main() {
         GlCall(glDrawArrays(GL_TRIANGLES, 0, 36));
       }
 
+      ImGui::Render();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      processInput(window);
       glfwSwapBuffers(window);
-      glfwPollEvents();
     }
   }
-  // Terminate GLFW
 
+  // Cleanup
+  ImGui_ImplGlfw_Shutdown();
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui::DestroyContext();
   glfwTerminate();
   return 0;
 }
