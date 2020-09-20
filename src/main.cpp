@@ -20,8 +20,8 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 
-const unsigned int SRC_WIDTH = 800;
-const unsigned int SRC_HEIGHT = 600;
+unsigned int SRC_WIDTH = 800;
+unsigned int SRC_HEIGHT = 600;
 
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -31,6 +31,8 @@ void processInput(GLFWwindow *window) {
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
+  SRC_WIDTH = width;
+  SRC_HEIGHT = height;
 }
 
 // Define main function
@@ -71,8 +73,6 @@ int main() {
   // Nr of vertex attribs supported
   int nrAttributes;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
-  std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes
-            << std::endl;
 
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
@@ -160,10 +160,7 @@ int main() {
     texture1.Bind(0);
     texture2.Bind(1);
 
-    glm::mat4 proj =
-        glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    glm::mat4 view =
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::vec3 translation = glm::vec3(0.0f, 0.0f, -3.0f);
 
     bool imgui_window = true;
     // Event loop
@@ -174,15 +171,16 @@ int main() {
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
 
-      if (imgui_window) {
-        ImGui::Begin("Another Window", &imgui_window);
-        ImGui::Text("Hello from another window!");
+      glm::mat4 proj =
+          glm::perspective(glm::radians(45.0f),
+                           (float)SRC_WIDTH / (float)SRC_HEIGHT, 0.1f, 100.0f);
+      glm::mat4 view = glm::translate(glm::mat4(1.0f), translation);
 
-        if (ImGui::Button("Close Me"))
-          imgui_window = false;
+      ImGui::Begin("Another Window", &imgui_window);
+      ImGui::SliderFloat3("Projection", &translation.x, -10.0f, 10.0f);
+      ImGui::Text("Hello from another window!");
 
-        ImGui::End();
-      }
+      ImGui::End();
 
       renderer.Clear();
 
