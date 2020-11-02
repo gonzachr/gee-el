@@ -8,6 +8,7 @@
 #include "ibuffer.h"
 #include "renderer.h"
 #include "shader.h"
+#include "sphere.h"
 #include "texture.h"
 #include "varray.h"
 #include "vblayout.h"
@@ -87,55 +88,23 @@ int main() {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
+  Sphere s;
   {
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-
-        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-
-        -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-        0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-
-    glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
-
-    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
-
     GlCall(glEnable(GL_DEPTH_TEST));
     GlCall(glEnable(GL_BLEND));
     GlCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     VertexArray va;
-    VertexBuffer vb(vertices, sizeof(vertices));
+    VertexBuffer vb(s.getInterleavedVertices(), s.getInterleavedVertexSize());
 
     VertexBufferLayout layout;
+    layout.Push<float>(3);
     layout.Push<float>(3);
     layout.Push<float>(2);
 
     va.AddBuffer(vb, layout);
 
-    IndexBuffer ib(indices, 6);
+    IndexBuffer ib(s.getIndices(), s.getIndexSize());
 
     std::string vertexShader = Shader::ReadFile("../src/glsl/vertex.glsl");
     std::string fragmentShader = Shader::ReadFile("../src/glsl/fragment.glsl");
@@ -145,22 +114,14 @@ int main() {
 
     shader.SetUniform4f("u_Color", 0.2f, 0.5f, 0.8f, 1.0f);
 
-    Texture texture1 = Texture("../res/textures/awesome.png");
-    shader.SetUniform1i("u_Texture1", 0);
-
-    Texture texture2 = Texture("../res/textures/travel.png");
-    shader.SetUniform1i("u_Texture2", 1);
-
     ib.Unbind();
     va.Unbind();
     shader.Unbind();
 
     Renderer renderer;
 
-    texture1.Bind(0);
-    texture2.Bind(1);
-
     glm::vec3 translation = glm::vec3(0.0f, 0.0f, -3.0f);
+    float rot = 0;
 
     bool imgui_window = true;
     // Event loop
@@ -178,6 +139,7 @@ int main() {
 
       ImGui::Begin("Another Window", &imgui_window);
       ImGui::SliderFloat3("Projection", &translation.x, -10.0f, 10.0f);
+      ImGui::SliderFloat("Projection", &rot, 0.0, 100.0);
       ImGui::Text("Hello from another window!");
 
       ImGui::End();
@@ -187,18 +149,15 @@ int main() {
       va.Bind();
       shader.Bind();
 
-      for (unsigned int i = 0; i < 10; i++) {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
-        model = glm::rotate(
-            model,
-            glm::radians((float)glfwGetTime() * (float)(20.0f * (i + 1))),
-            glm::vec3(1.0f, 0.3f, 0.5f));
+      glm::mat4 model =
+          glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-        glm::mat4 mvp = proj * view * model;
+      glm::mat4 mvp = proj * view * model;
+      shader.SetUniformMat4f("u_MVP", mvp);
 
-        shader.SetUniformMat4f("u_MVP", mvp);
-        GlCall(glDrawArrays(GL_TRIANGLES, 0, 36));
-      }
+      ib.Bind();
+      GlCall(glDrawElements(GL_TRIANGLES, (unsigned int)s.getIndexCount(),
+                            GL_UNSIGNED_INT, 0));
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
