@@ -9,7 +9,6 @@ The project uses CMake, and I like to use [Ninja](https://ninja-build.org/) to c
 ```
 mkdir build && cd build && cmake -GNinja ..
 ```
-On `build` dir:
 
 ```
 ninja && ./main
